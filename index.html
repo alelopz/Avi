@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>¿Querés ser mi novia?</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Dancing+Script:wght@700&family=Montserrat:wght@400;600;700&display=swap"
+        rel="stylesheet">
+    <!-- Canvas Confetti Library -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'pastel-pink': '#ffd1dc',
+                        'pastel-rose': '#ffb7c5',
+                        'intense-red': '#e63946',
+                        'crimson-pastel': '#d62828',
+                        'cream-paper': '#fffdfa'
+                    },
+                    fontFamily: {
+                        'sans': ['Montserrat', 'sans-serif'],
+                        'romantic': ['Dancing Script', 'cursive'],
+                        'letter': ['Caveat', 'cursive']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Estilos generales y animaciones personalizadas */
+        body {
+            background: linear-[#ffe5ec];
+            background: linear-gradient(135deg, #ffc8dd 0%, #ffafcc 50%, #ff85a1 100%);
+            overflow-x: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* Efecto Cristal (Glassmorphism) */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.45);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            box-shadow: 0 20px 40px rgba(214, 40, 40, 0.15);
+        }
+
+        /* Transiciones suaves para el botón NO esquivo */
+        #btnNo {
+            transition: all 0.15s ease-out;
+            position: relative;
+            z-index: 20;
+        }
+
+        /* --- SOBRE 3D Y CARTA ANIMADA --- */
+        .envelope-wrapper {
+            perspective: 1000px;
+        }
+
+        .envelope {
+            position: relative;
+            width: 300px;
+            height: 200px;
+            background-color: #f43f5e;
+            border-bottom-left-radius: 12px;
+            border-bottom-right-radius: 12px;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.25);
+            transition: transform 0.6s ease;
+        }
+
+        @media (min-width: 640px) {
+            .envelope {
+                width: 420px;
+                height: 270px;
+            }
+        }
+
+        /* Solapa superior del sobre */
+        .envelope::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            border-left: 150px solid transparent;
+            border-right: 150px solid transparent;
+            border-top: 110px solid #e11d48;
+            transform-origin: top;
+            transition: transform 0.6s 0.4s ease, z-index 0.2s 0.4s;
+            z-index: 5;
+        }
+
+        @media (min-width: 640px) {
+            .envelope::before {
+                border-left-width: 210px;
+                border-right-width: 210px;
+                border-top-width: 145px;
+            }
+        }
+
+        /* Solapas laterales del sobre */
+        .envelope-pocket {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: transparent;
+            border-left: 150px solid #fb7185;
+            border-right: 150px solid #fb7185;
+            border-bottom: 105px solid #f43f5e;
+            border-bottom-left-radius: 12px;
+            border-bottom-right-radius: 12px;
+            z-index: 4;
+            pointer-events: none;
+        }
+
+        @media (min-width: 640px) {
+            .envelope-pocket {
+                border-left-width: 210px;
+                border-right-width: 210px;
+                border-bottom-width: 140px;
+            }
+        }
+
+        /* La Carta Interna */
+        .letter {
+            position: absolute;
+            bottom: 10px;
+            left: 5%;
+            width: 90%;
+            height: 90%;
+            background: #fffdf9;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transition: all 0.8s 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 2;
+            padding: 16px;
+            border: 1px solid #ffe5ec;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Estado desplegado del sobre y emergencia de la carta */
+        .envelope-opened::before {
+            transform: rotateX(180deg);
+            z-index: 1;
+        }
+
+        .envelope-opened .letter {
+            transform: translateY(-80px) scale(1.02);
+            height: 380px;
+            max-height: 65vh;
+            z-index: 10;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
+        }
+
+        @media (min-width: 640px) {
+            .envelope-opened .letter {
+                transform: translateY(-110px) scale(1.08);
+                height: 460px;
+                max-height: 70vh;
+            }
+        }
+
+        /* Container interno para scroll si el texto es largo */
+        .letter-scrollable {
+            overflow-y: auto;
+            max-height: 100%;
+            padding-right: 4px;
+        }
+
+        /* Personalización de la barra de scroll de la carta */
+        .letter-scrollable::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .letter-scrollable::-webkit-scrollbar-track {
+            background: #fff0f3;
+            border-radius: 10px;
+        }
+
+        .letter-scrollable::-webkit-scrollbar-thumb {
+            background: #ffb7c5;
+            border-radius: 10px;
+        }
+
+        /* Sello de Cera */
+        .wax-seal {
+            position: absolute;
+            top: 75px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 46px;
+            height: 46px;
+            background: linear-gradient(135deg, #990000, #d62828);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffccd5;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3), inset 0 2px 4px rgba(255, 255, 255, 0.3);
+            z-index: 6;
+            transition: opacity 0.4s ease, transform 0.4s ease;
+            cursor: pointer;
+        }
+
+        @media (min-width: 640px) {
+            .wax-seal {
+                top: 100px;
+                width: 54px;
+                height: 54px;
+            }
+        }
+
+        .envelope-opened .wax-seal {
+            opacity: 0;
+            transform: translateX(-50%) scale(0.5);
+            pointer-events: none;
+        }
+
+        /* Animación Pulse Suave para el Botón SÍ */
+        @keyframes pulse-romantic {
+
+            0%,
+            100% {
+                transform: scale(1);
+                box-shadow: 0 0 15px rgba(230, 57, 70, 0.4);
+            }
+
+            50% {
+                transform: scale(1.05);
+                box-shadow: 0 0 25px rgba(230, 57, 70, 0.7);
+            }
+        }
+
+        .btn-yes-animated {
+            animation: pulse-romantic 2s infinite ease-in-out;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen flex items-center justify-center p-4 relative font-sans antialiased">
+
+    <!-- CANVAS DE FONDO: CORAZONES FLOTANTES CONTINUOS -->
+    <canvas id="heartsCanvas" class="fixed inset-0 pointer-events-none z-0"></canvas>
+
+    <!-- TARJETA PRINCIPAL (PREGUNTA DE NOVIAZGO) -->
+    <main id="mainCard"
+        class="glass-card max-w-lg w-full rounded-3xl p-6 sm:p-10 text-center relative z-10 transition-all duration-700">
+
+        <!-- Icono/Ilustración Superior -->
+        <div
+            class="relative w-24 h-24 sm:w-28 sm:h-28 mx-auto mb-6 flex items-center justify-center bg-rose-100/70 rounded-full shadow-inner border border-rose-200">
+            <i class="fa-solid fa-heart text-5xl sm:text-6xl text-intense-red animate-bounce"></i>
+            <i class="fa-solid fa-sparkles text-amber-400 text-xl absolute top-2 right-2"></i>
+        </div>
+
+        <!-- Pregunta Principal -->
+        <h1 class="font-romantic text-4xl sm:text-6xl font-bold text-gray-800 mb-3 drop-shadow-sm leading-tight">
+            ¿Querés ser mi novia?
+        </h1>
+
+        <p class="text-rose-900/80 text-sm sm:text-base font-medium mb-8">
+            Sos lo más lindo que me pasó en la vida y me gustaria podes construir algo eterno con vos
+        </p>
+
+        <!-- Contenedor de Botones de Interacción -->
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 min-h-[100px] relative">
+
+            <!-- Botón SÍ -->
+            <button id="btnYes" onclick="onSayYes()"
+                class="btn-yes-animated w-full sm:w-auto px-8 py-3.5 bg-gradient-to-r from-intense-red to-crimson-pastel hover:from-crimson-pastel hover:to-intense-red text-white font-bold text-lg rounded-full shadow-xl transform active:scale-95 transition-all flex items-center justify-center gap-2">
+                <i class="fa-solid fa-heart"></i> ¡SÍ, QUIERO!
+            </button>
+
+            <!-- Botón NO (Esquivo) -->
+            <button id="btnNo"
+                class="w-full sm:w-auto px-8 py-3.5 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold text-lg rounded-full shadow-md border border-gray-300">
+                No
+            </button>
+        </div>
+    </main>
+
+    <!-- PANTALLA ÉPICA: SOBRE Y CARTA ROMÁNTICA (Oculta hasta presionar SÍ) -->
+    <div id="letterSection"
+        class="fixed inset-0 z-30 flex flex-col items-center justify-between py-6 px-4 bg-pink-950/40 backdrop-blur-md opacity-0 pointer-events-none transition-opacity duration-700 overflow-y-auto">
+
+        <div class="text-center my-auto text-white drop-shadow-md z-40">
+            <h2 class="font-romantic text-3xl sm:text-5xl font-bold mb-1">¡Sabía que me dirías que sí! ❤️</h2>
+            <p class="text-pink-100 text-xs sm:text-base">Toca el sobre para abrir/cerrar tu carta</p>
+        </div>
+
+        <!-- Contenedor 3D del sobre -->
+        <div class="envelope-wrapper my-auto pt-24 sm:pt-28 pb-4">
+            <div id="envelope" class="envelope cursor-pointer" onclick="toggleEnvelope()">
+                <!-- Sello de cera -->
+                <div class="wax-seal">
+                    <i class="fa-solid fa-heart text-xl sm:text-2xl"></i>
+                </div>
+
+                <!-- La carta interna -->
+                <div class="letter text-gray-800">
+                    <div
+                        class="border-2 border-dashed border-rose-200 h-full p-3 sm:p-5 rounded-lg flex flex-col justify-between bg-cream-paper letter-scrollable">
+
+                        <!-- Encabezado de la carta -->
+                        <div>
+                            <div class="flex justify-between items-center mb-3 border-b border-rose-100 pb-2">
+                                <span class="font-letter text-2xl sm:text-3xl text-intense-red">Para mi amor
+                                    eterno</span>
+                                <i class="fa-solid fa-heart-circle-bolt text-rose-400 text-lg"></i>
+                            </div>
+
+                            <!-- CUERPO DE LA CARTA (Modificable) -->
+                            <div id="letterContent"
+                                class="text-xs sm:text-base leading-relaxed text-gray-700 space-y-3 font-sans">
+                                <p class="font-bold text-rose-600">¡Hoy empieza un capitulo que siempre quise compartir
+                                    con vos
+                                </p>
+                                <p>
+                                    Gracias por haber hecho feliz a mi yo chico, y por hacer que todo a mi alrededor
+                                    vuelva a brillar.
+                                    Sos, sin duda, la persona más maravillosa que pude haber conocido en mi vida.
+                                </p>
+                                <p class="italic text-gray-600 bg-rose-50 p-3 rounded-lg border-l-4 border-intense-red">
+                                    "Cada segundo que pasa me hace darme cuenta de que mi amor por vos no tiene límites;
+                                    no para de crecer y crecer,
+                                    y no hay nada en este mundo que vaya a cambiar eso."
+                                </p>
+                                <p>
+                                    Te prometo muchas risas, estar siempre para vos, en las buenas y en las malas. Te
+                                    prometo dar todo de mí
+                                    para que aquel sueño que teníamos de chicos se haga realidad y construir juntos todo
+                                    lo que soñamos.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Pie de carta -->
+                        <div class="mt-4 pt-3 border-t border-rose-100 flex justify-between items-end">
+                            <div>
+                                <p class="text-xs text-gray-400">Con todo mi corazón,</p>
+                                <p class="font-romantic text-xl sm:text-3xl text-intense-red font-bold">Por siempre tuyo
+                                </p>
+                            </div>
+                            <i class="fa-solid fa-crown text-amber-400 text-xl sm:text-2xl"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Solapa inferior del sobre -->
+                <div class="envelope-pocket"></div>
+            </div>
+        </div>
+
+        <!-- Botones de Acción de la Carta -->
+        <div class="my-auto pt-2 flex gap-3 sm:gap-4 z-40">
+            <button onclick="replayEffects()"
+                class="px-4 py-2 sm:px-5 sm:py-2.5 bg-gradient-to-r from-intense-red to-rose-500 text-white text-xs sm:text-sm font-semibold rounded-full shadow-lg transition flex items-center gap-2">
+                <i class="fa-solid fa-sparkles"></i> ¡Más Confeti!
+            </button>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // --- 1. ANIMACIÓN DE CORAZONES EN CANVAS ---
+        const canvas = document.getElementById('heartsCanvas');
+        const ctx = canvas.getContext('2d');
+        let hearts = [];
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        class Heart {
+            constructor() {
+                this.reset();
+            }
+
+            reset() {
+                this.x = Math.random() * canvas.width;
+                this.y = canvas.height + Math.random() * 100;
+                this.size = Math.random() * 15 + 10;
+                this.speedY = Math.random() * 1.5 + 0.5;
+                this.speedX = Math.sin(Math.random() * Math.PI) * 0.8;
+                this.opacity = Math.random() * 0.5 + 0.3;
+                this.color = `hsla(${Math.random() * 20 + 340}, 85%, 65%, ${this.opacity})`;
+                this.rotation = Math.random() * Math.PI * 2;
+                this.rotationSpeed = (Math.random() - 0.5) * 0.02;
+            }
+
+            update() {
+                this.y -= this.speedY;
+                this.x += Math.sin(this.y * 0.01) * 0.5;
+                this.rotation += this.rotationSpeed;
+                if (this.y < -this.size) {
+                    this.reset();
+                }
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation);
+                ctx.beginPath();
+                ctx.fillStyle = this.color;
+
+                // Dibujo vectorial de corazón
+                const topCurveHeight = this.size * 0.3;
+                ctx.moveTo(0, topCurveHeight);
+                ctx.bezierCurveTo(0, 0, -this.size / 2, 0, -this.size / 2, topCurveHeight);
+                ctx.bezierCurveTo(-this.size / 2, (this.size + topCurveHeight) / 2, 0, this.size, 0, this.size);
+                ctx.bezierCurveTo(0, this.size, this.size / 2, (this.size + topCurveHeight) / 2, this.size / 2, topCurveHeight);
+                ctx.bezierCurveTo(this.size / 2, 0, 0, 0, 0, topCurveHeight);
+                ctx.closePath();
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        // Crear 45 corazones flotantes
+        for (let i = 0; i < 45; i++) {
+            const heart = new Heart();
+            heart.y = Math.random() * canvas.height;
+            hearts.push(heart);
+        }
+
+        function animateHearts() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            hearts.forEach(heart => {
+                heart.update();
+                heart.draw();
+            });
+            requestAnimationFrame(animateHearts);
+        }
+        animateHearts();
+
+
+        // --- 2. LÓGICA DEL BOTÓN "NO" ESQUIVO ---
+        const btnNo = document.getElementById('btnNo');
+
+        function moveBtnNo() {
+            const padding = 20;
+            const btnWidth = btnNo.offsetWidth;
+            const btnHeight = btnNo.offsetHeight;
+
+            // Calcular área visible permitida
+            const maxX = window.innerWidth - btnWidth - padding;
+            const maxY = window.innerHeight - btnHeight - padding;
+
+            const randomX = Math.max(padding, Math.floor(Math.random() * maxX));
+            const randomY = Math.max(padding, Math.floor(Math.random() * maxY));
+
+            btnNo.style.position = 'fixed';
+            btnNo.style.left = `${randomX}px`;
+            btnNo.style.top = `${randomY}px`;
+        }
+
+        // El botón se mueve al pasar el mouse o tocarlo en móviles
+        btnNo.addEventListener('mouseenter', moveBtnNo);
+        btnNo.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            moveBtnNo();
+        });
+
+
+        // --- 3. ACCIÓN AL PRESIONAR "SÍ" ---
+        function onSayYes() {
+            // Desaparecer la tarjeta principal
+            const mainCard = document.getElementById('mainCard');
+            mainCard.style.opacity = '0';
+            mainCard.style.transform = 'scale(0.8)';
+
+            setTimeout(() => {
+                mainCard.style.display = 'none';
+
+                // Mostrar sección de la carta
+                const letterSection = document.getElementById('letterSection');
+                letterSection.classList.remove('opacity-0', 'pointer-events-none');
+                letterSection.classList.add('opacity-100');
+
+                // Abrir el sobre automáticamente después de un instante
+                setTimeout(() => {
+                    document.getElementById('envelope').classList.add('envelope-opened');
+                }, 600);
+
+            }, 700);
+
+            // Explosión de Confeti y Corazones Épica
+            fireConfettiExplosion();
+        }
+
+        function fireConfettiExplosion() {
+            // Lluvia masiva de confeti y corazones
+            const count = 200;
+            const defaults = { origin: { y: 0.7 } };
+
+            function fire(particleRatio, opts) {
+                confetti(Object.assign({}, defaults, opts, {
+                    particleCount: Math.floor(count * particleRatio)
+                }));
+            }
+
+            fire(0.25, { spread: 26, startVelocity: 55, colors: ['#ff0000', '#ffa8e8'] });
+            fire(0.2, { spread: 60, colors: ['#ffffff', '#ff4d6d'] });
+            fire(0.35, { spread: 100, decay: 0.91, scalar: 0.8 });
+            fire(0.1, { spread: 120, startVelocity: 25, decay: 0.92, colors: ['#ffe600', '#ff0054'] });
+            fire(0.1, { spread: 120, startVelocity: 45 });
+        }
+
+        function toggleEnvelope() {
+            const envelope = document.getElementById('envelope');
+            envelope.classList.toggle('envelope-opened');
+        }
+
+        function replayEffects() {
+            fireConfettiExplosion();
+        }
+
+        // Permite editar el contenido de la carta directamente
+        function editLetterText() {
+            const content = document.getElementById('letterContent');
+            const newText = prompt("Escribí el mensaje para tu carta romántica:", content.innerText.trim());
+
+            if (newText !== null && newText.trim() !== "") {
+                content.innerHTML = `<p class="italic text-gray-700 bg-rose-50 p-4 rounded-lg border-l-4 border-intense-red whitespace-pre-line">${newText}</p>`;
+            }
+        }
+    </script>
+</body>
+
+</html>
